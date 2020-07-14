@@ -1,0 +1,103 @@
+#!/bin/sh
+
+### BEGIN INIT INFO
+# Provides:          mongod
+# Required-Start:    $local_fs $remote_fs $network $syslog
+# Required-Stop:     $local_fs $remote_fs $network $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Starts the MongoDB database server
+# Description:       Starts the MongoDB database server
+### END INIT INFO
+
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+
+# Full name of daemon
+DAEMON=/usr/bin/mongod
+
+# Daemon command line options
+DAEMON_OPTS="-f /etc/mongod.conf"
+
+# Daemon name. Used also for pid file creation.
+NAME="mongod"
+
+# Daemon description
+DESC="MongoDB database server"
+
+# User account used to run mongod daemon
+USER="mongodb"
+
+# Replica set name (modify in case you would like to run mongod 
+# configured as replica set node - see http://www.mongodb.org/display/DOCS/Replica+Sets)
+RS_NAME=""
+
+# In case mongod is configured as replica-set node, then RS_SEED
+# can contain comma separated seed nodes or e.g. command to get
+# the list of seed nodes, e.g. RS_SEED="host1:port1,host2:port2,host3"
+# or something like RS_SEED="`get_seed_nodes`" (see Reg2Rep project
+# at http://github.com/vanilladesk/reg2rep for example of using
+# remote registry for keeping list of seed nodes in a dynamic environment)
+RS_SEED=""
+
+#------------------------------------------------
+
+# if RS_SEED is defined and RS_NAME too, then append RS_SEED to RS_NAME
+[ "$RS_SEED" ] && [ "$RS_NAME" ] && RS_NAME="$RS_NAME/$RS_SEED"
+
+# if RS_NAME is defined, then include it in daemon command line options
+[ "$RS_NAME" ] && DAEMON_OPTS="--replSet $RS_NAME $DAEMON_OPTS"
+
+[ -e $DAEMON ] || exit 0
+
+set -e
+
+. /lib/lsb/init-functions
+
+# function d_start {
+#  echo -n "Starting $DESC: "
+#  start-stop-daemon --start --background --quiet \
+#    --make-pidfile --pidfile /var/run/$NAME.pid \
+#  	--chuid $USER \
+#  	--exec $DAEMON -- $DAEMON_OPTS || true
+#  echo "$NAME $DAEMON_OPTS"
+#
+# }
+
+# function d_stop {
+#   echo -n "Stopping $DESC: "
+#   start-stop-daemon --stop --quiet --pidfile /var/run/$NAME.pid \
+#   	--exec $DAEMON || true
+#  echo "$NAME."
+#
+# }
+
+case "$1" in
+  start)
+    echo -n "Starting $DESC: "
+    start-stop-daemon --start --background --quiet \
+      --make-pidfile --pidfile /var/run/$NAME.pid \
+      --chuid $USER \
+      --exec $DAEMON -- $DAEMON_OPTS || true
+    echo "$NAME $DAEMON_OPTS"
+	;;
+  stop)
+    echo -n "Stopping $DESC: "
+    start-stop-daemon --stop --quiet --pidfile /var/run/$NAME.pid \
+      --exec $DAEMON || true
+    echo "$NAME."
+	;;
+#  restart|force-reload)
+#	d_stop
+#	sleep 1
+#	d_start
+#	;;
+  status)
+	status_of_proc -p /var/run/$NAME.pid "$DAEMON" mongod && exit 0 || exit $?
+	;;
+  *)
+	echo "Usage: $NAME {start|stop|restart|force-reload|status}" >&2
+	exit 1
+	;;
+esac
+
+exit 0
