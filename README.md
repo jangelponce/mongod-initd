@@ -4,7 +4,7 @@
 sudo vim /etc/init.d/mongodb
 
 # Set execute permissions
-sudo chown +x /etc/init.d/mongodb
+sudo chmod +x /etc/init.d/mongodb
 
 # Start mongod
 sudo service mongodb start
